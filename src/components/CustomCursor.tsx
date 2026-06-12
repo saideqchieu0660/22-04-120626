@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { motion, useMotionValue, useSpring } from 'motion/react';
+import { useTheme } from './ThemeProvider';
 
 export const CustomCursor = () => {
+  const { isEcoMode } = useTheme();
   const [isHovering, setIsHovering] = useState(false);
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
@@ -11,6 +13,8 @@ export const CustomCursor = () => {
   const cursorYSpring = useSpring(cursorY, springConfig);
 
   useEffect(() => {
+    if (isEcoMode) return;
+
     const moveCursor = (e: MouseEvent) => {
       cursorX.set(e.clientX - 16);
       cursorY.set(e.clientY - 16);
@@ -40,7 +44,11 @@ export const CustomCursor = () => {
       window.removeEventListener('mousemove', moveCursor);
       window.removeEventListener('mouseover', handleMouseOver);
     };
-  }, [cursorX, cursorY]);
+  }, [cursorX, cursorY, isEcoMode]);
+
+  if (isEcoMode) {
+    return null;
+  }
 
   return (
     <motion.div
