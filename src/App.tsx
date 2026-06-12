@@ -653,6 +653,9 @@ function Layout({ children }: { children: React.ReactNode }) {
             FirebaseListenerManager.clearAll();
           }
 
+          // Force notify any components dependent on global store
+          window.dispatchEvent(new CustomEvent("henosis-data-synced"));
+
           if (currentUser && !prevUser) {
              // Dispatch pulse when logging in
              window.dispatchEvent(new CustomEvent("app-pulse-logo"));

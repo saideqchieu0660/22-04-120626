@@ -155,35 +155,44 @@ export function InteractiveTutorial({ isOpen, onClose, activeTab, setActiveTab }
     const step = steps[currentStep];
     if (!step) return;
 
-    // Retry finding element if it takes a tiny moment to render
-    const attemptFind = (retries = 0) => {
-      const el = document.querySelector(step.targetSelector);
-      if (el) {
-        if (shouldScroll) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-        const rect = el.getBoundingClientRect();
-        setCoords({
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height,
-        });
-      } else {
-        if (retries < 5) {
-          setTimeout(() => attemptFind(retries + 1), 150);
-        } else {
-          setCoords(null); // Fallback to centered modal
-        }
+    // Direct find element
+    const el = document.querySelector(step.targetSelector);
+    if (el) {
+      if (shouldScroll) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
       }
-    };
-
-    attemptFind();
+      const rect = el.getBoundingClientRect();
+      setCoords({
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      });
+    } else {
+      setCoords(null); // Fallback to centered modal if element isn't in DOM yet
+    }
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => updateCoords(true), 300);
-    return () => clearTimeout(timer);
+    if (!isOpen) return;
+
+    // Immediately trigger focus and scroll on step change
+    updateCoords(true);
+
+    // Frequently poll coordinates during tab load, mounting, and Framer Motion slide animations
+    const intervalId = setInterval(() => {
+      updateCoords(false);
+    }, 150);
+
+    // Stop polling after 1.5 seconds, once animations are guaranteed stable
+    const timeoutId = setTimeout(() => {
+      clearInterval(intervalId);
+    }, 1500);
+
+    return () => {
+      clearInterval(intervalId);
+      clearTimeout(timeoutId);
+    };
   }, [currentStep, isOpen, activeTab]);
 
   useEffect(() => {
@@ -230,15 +239,16 @@ export function InteractiveTutorial({ isOpen, onClose, activeTab, setActiveTab }
             style={{
               clipPath: `polygon(
                 0% 0%, 
-                0% 100%, 
-                ${coords.left}px 100%, 
-                ${coords.left}px ${coords.top}px, 
-                ${coords.left + coords.width}px ${coords.top}px, 
-                ${coords.left + coords.width}px ${coords.top + coords.height}px, 
-                ${coords.left}px ${coords.top + coords.height}px, 
-                ${coords.left}px 100%, 
+                100% 0%, 
                 100% 100%, 
-                100% 0%
+                0% 100%, 
+                0% 0%, 
+                ${coords.left}px ${coords.top}px, 
+                ${coords.left}px ${coords.top + coords.height}px, 
+                ${coords.left + coords.width}px ${coords.top + coords.height}px, 
+                ${coords.left + coords.width}px ${coords.top}px, 
+                ${coords.left}px ${coords.top}px, 
+                0% 0%
               )`
             }}
           />

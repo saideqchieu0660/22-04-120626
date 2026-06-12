@@ -223,13 +223,6 @@ export default function StudentDashboard() {
 
   const [quote] = useState(() => MOTIVATION_QUOTES[Math.floor(Math.random() * MOTIVATION_QUOTES.length)]);
   const [showTutorial, setShowTutorial] = useState(false);
-
-  useEffect(() => {
-    const hasRun = localStorage.getItem("hasRunTutorial");
-    if (hasRun !== "true") {
-      setShowTutorial(true);
-    }
-  }, []);
   
   const [activeTab, setActiveTab] = useState<"study" | "ranking" | "quiz" | "mock_exam_setup" | "settings" | "history" | "skill_tree" | "all_sets" | "groups" | "achievements" | "profile" | "create_deck" | "cyberpunk">("study");
   const [profileNameInput, setProfileNameInput] = useState("");
@@ -1463,7 +1456,12 @@ export default function StudentDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in pb-12 relative w-full max-w-full overflow-x-hidden">
-      <OnboardingTour />
+      <OnboardingTour onComplete={() => {
+        const hasRun = localStorage.getItem("hasRunTutorial");
+        if (hasRun !== "true") {
+          setShowTutorial(true);
+        }
+      }} />
       {/* Thêm Toast Thông báo Toast Thành Công */}
       {joinStatus && (
           <div className="fixed top-20 right-4 z-50 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl animate-in slide-in-from-right-8 font-bold flex items-center gap-3">

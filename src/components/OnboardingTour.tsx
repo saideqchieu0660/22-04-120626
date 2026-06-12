@@ -34,12 +34,11 @@ export function OnboardingTour({ onComplete }: { onComplete?: () => void }) {
   
   useEffect(() => {
      let mounted = true;
-     const checkTourStatus = async () => {
-         const user = auth.currentUser;
-         if (!user) return;
-         
+     let unsubscribe = () => {};
+     
+     const checkTourStatus = async (uid: string) => {
          try {
-             const docRef = doc(db, "user_preferences", user.uid);
+             const docRef = doc(db, "user_preferences", uid);
              const snap = await getDoc(docRef);
              if (mounted) {
                  if (snap.exists() && snap.data().skipOnboarding) {
@@ -52,13 +51,20 @@ export function OnboardingTour({ onComplete }: { onComplete?: () => void }) {
              console.error("Error reading user_preferences onboarding data:", e);
              if (mounted) setIsVisible(true);
          }
-     }
-     const timeout = setTimeout(() => {
-         checkTourStatus();
-     }, 1000);
+     };
+
+     import("firebase/auth").then(({ onAuthStateChanged }) => {
+         if (!mounted) return;
+         unsubscribe = onAuthStateChanged(auth, (usr) => {
+             if (usr) {
+                 checkTourStatus(usr.uid);
+             }
+         });
+     });
+
      return () => {
          mounted = false;
-         clearTimeout(timeout);
+         unsubscribe();
      };
   }, [onComplete]);
 

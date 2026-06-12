@@ -239,6 +239,7 @@ export default function TeacherDashboard() {
           });
         }, (err) => {
           console.error("Teacher student sync error:", err);
+          if (isMounted) setIsInitialLoading(false);
         });
         if (!isMounted) {
           unsub();
@@ -294,7 +295,23 @@ export default function TeacherDashboard() {
             }
           };
           syncBack();
+        }, (err) => {
+          console.error("Teacher sets sync error:", err);
+          if (isMounted) setIsInitialLoading(false);
         });
+
+        // Fallback safety timeout 3 seconds
+        setTimeout(() => {
+           if (isMounted) {
+              setIsInitialLoading(prev => {
+                 if (prev) {
+                    console.warn("Teacher sets sync timeout fallback triggered.");
+                    return false;
+                 }
+                 return prev;
+              });
+           }
+        }, 3000);
         if (!isMounted) {
           unsub();
           return;
@@ -1230,18 +1247,40 @@ export default function TeacherDashboard() {
                                   📂 {subject} <span className="opacity-60 text-[10px] font-bold font-mono">({subjectDecks.length} bộ)</span>
                                 </h4>
                               </div>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setNewCategoryName(subject);
-                                  setEditingCategory(subject);
-                                }}
-                                className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-stone-100 dark:bg-zinc-800 text-stone-500 hover:text-yellow-600 dark:hover:text-yellow-450 border border-stone-200 dark:border-zinc-700 transition"
-                                title="Đổi tên chuyên mục này"
-                              >
-                                ✍️ ĐỔI TÊN
-                              </button>
+                              <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const deckIds = subjectDecks.map(d => d.id);
+                                    const matchAll = subjectDecks.every(d => selectedDeckIds.includes(d.id));
+                                    if (matchAll) {
+                                      setSelectedDeckIds(prev => prev.filter(id => !deckIds.includes(id)));
+                                    } else {
+                                      setSelectedDeckIds(prev => Array.from(new Set([...prev, ...deckIds])));
+                                    }
+                                  }}
+                                  className={`px-2 py-0.5 rounded text-[9px] font-black uppercase transition border border-stone-200 dark:border-zinc-700 cursor-pointer ${
+                                    subjectDecks.every(d => selectedDeckIds.includes(d.id))
+                                      ? "bg-purple-600 text-white hover:bg-purple-700"
+                                      : "bg-purple-100 hover:bg-purple-200 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 dark:hover:bg-purple-900/60"
+                                  }`}
+                                >
+                                  {subjectDecks.every(d => selectedDeckIds.includes(d.id)) ? "✅ BỎ CHỌN" : "☑️ CHỌN HẾT SET"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setNewCategoryName(subject);
+                                    setEditingCategory(subject);
+                                  }}
+                                  className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-stone-100 dark:bg-zinc-800 text-stone-500 hover:text-yellow-600 dark:hover:text-yellow-450 border border-stone-200 dark:border-zinc-700 transition"
+                                  title="Đổi tên chuyên mục này"
+                                >
+                                  ✍️ ĐỔI TÊN
+                                </button>
+                              </div>
                             </>
                           )}
                         </div>
