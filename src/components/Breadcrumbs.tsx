@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { store } from "../lib/store";
 
 export function Breadcrumbs() {
   const location = useLocation();
@@ -15,13 +16,24 @@ export function Breadcrumbs() {
         const last = index === pathnames.length - 1;
         const to = `/${pathnames.slice(0, index + 1).join("/")}`;
 
+        let displayName = value.replace(/-/g, " ");
+        let isDeckTitle = false;
+
+        if (index > 0 && pathnames[index - 1] === "study") {
+          const resolvedTitle = store.getRawDeckTitle(value);
+          if (resolvedTitle) {
+            displayName = resolvedTitle;
+            isDeckTitle = true;
+          }
+        }
+
         return (
           <React.Fragment key={to}>
             <ChevronRight className="w-4 h-4" />
             {last ? (
-              <span className="font-medium text-stone-800 dark:text-stone-200 capitalize">{value.replace("-", " ")}</span>
+              <span className={`font-medium text-stone-800 dark:text-stone-200 ${isDeckTitle ? "" : "capitalize"}`}>{displayName}</span>
             ) : (
-              <Link to={to} className="hover:text-amber-500 transition capitalize">{value.replace("-", " ")}</Link>
+              <Link to={to} className={`hover:text-amber-500 transition ${isDeckTitle ? "" : "capitalize"}`}>{displayName}</Link>
             )}
           </React.Fragment>
         );

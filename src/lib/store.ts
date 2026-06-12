@@ -613,6 +613,10 @@ export const store = {
     decks = decks.filter(d => d.id !== deck.id);
     decks.push(deck);
   },
+  getRawDeckTitle: (id: string) => {
+    const d = tempDecks[id] || decks.find(d => d.id === id);
+    return d ? d.title : undefined;
+  },
   getDeck: (id: string) => {
     const d = tempDecks[id] || decks.find(d => d.id === id);
     if (!d) return undefined;
