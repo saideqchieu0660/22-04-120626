@@ -81,6 +81,8 @@ export default function Agent3Widget() {
   const [isCreateNewSet, setIsCreateNewSet] = useState(false);
   const [newSetTitle, setNewSetTitle] = useState("");
   const [newSetSubject, setNewSetSubject] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const user = store.getCurrentUser();
 
@@ -184,6 +186,8 @@ export default function Agent3Widget() {
       setIsCreateNewSet(true);
     }
     
+    setSearchQuery("");
+    setSelectedCategory(null);
     setSaveSuccessMsg("");
     setSaveErrorMsg("");
     setIsSaveModalOpen(true);
@@ -206,6 +210,8 @@ export default function Agent3Widget() {
       setSelectedSetId("");
       setIsCreateNewSet(true);
     }
+    setSearchQuery("");
+    setSelectedCategory(null);
     setSaveSuccessMsg("");
     setSaveErrorMsg("");
     setIsSaveModalOpen(true);
@@ -771,31 +777,151 @@ export default function Agent3Widget() {
                   <div className="text-xs text-red-500 dark:text-red-400 font-bold mt-1 bg-red-500/5 p-2 rounded-lg border border-red-500/15 max-w-xs break-words">
                     Mày chưa có bộ thẻ học cá nhân nào. Hệ thống đã kích hoạt chế độ "Tạo Bộ Mới Tinh" bên dưới để hỗ trợ mày!
                   </div>
+                ) : !isCreateNewSet ? (
+                  <div className="space-y-2.5 mt-1 p-2.5 rounded-xl bg-stone-50 dark:bg-zinc-900 border border-stone-200/60 dark:border-zinc-800 animate-in fade-in-30">
+                    {/* Search set input and optionally Selected Target Deck state header */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="🔍 Tìm tên bộ thẻ học..."
+                        value={searchQuery}
+                        onChange={e => {
+                          setSearchQuery(e.target.value);
+                          if (e.target.value !== "") {
+                            // Clear selected category to show search results comfortably
+                            setSelectedCategory(null);
+                          }
+                        }}
+                        className="w-full bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 outline-none rounded-lg px-2.5 py-1.5 text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:border-amber-500/55 transition"
+                      />
+                      {selectedCategory && !searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCategory(null)}
+                          className="px-2 py-1 text-[10px] uppercase font-bold bg-stone-200 dark:bg-zinc-750 hover:bg-stone-300 dark:hover:bg-zinc-700 rounded-lg transition text-stone-600 dark:text-stone-300 shrink-0 cursor-pointer"
+                        >
+                          ⬅️ Quay Lại
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Active Selected Set indicator */}
+                    {selectedSetId ? (
+                      <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/15 flex justify-between items-center animate-in slide-in-from-top-1 duration-150">
+                        <span className="truncate">📍 Đã chọn: {existingSets.find(s => s.id === selectedSetId)?.title || "Chưa xác định"}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedSetId("");
+                          }}
+                          className="text-[9px] font-black text-rose-500 uppercase hover:underline ml-2 shrink-0 cursor-pointer"
+                        >
+                          XÓA CHỌN
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-[9px] text-amber-600 dark:text-amber-400 font-bold bg-amber-500/5 p-2 rounded-lg border border-amber-500/10 animate-in fade-in">
+                        👋 Mày chưa chọn bộ thẻ nào cả! Hãy tích chọn 1 bộ học ở danh sách bên dưới:
+                      </div>
+                    )}
+
+                    {/* List area with fixed height and scroll bar */}
+                    <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 text-xs">
+                      {searchQuery.trim() !== "" ? (
+                        /* Flattened Search Results mode */
+                        (() => {
+                          const matched = existingSets.filter(s =>
+                            s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (s.subject || "").toLowerCase().includes(searchQuery.toLowerCase())
+                          );
+                          if (matched.length === 0) {
+                            return <div className="text-center py-4 text-stone-400 text-[11px]">Không tìm thấy bộ thẻ nào khớp với từ khoá 😢</div>;
+                          }
+                          return matched.map(set => (
+                            <button
+                              key={set.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSetId(set.id);
+                                setIsCreateNewSet(false);
+                              }}
+                              className={cn(
+                                "w-full text-left p-2 rounded-lg border transition-all flex items-center justify-between gap-1.5 cursor-pointer text-xs",
+                                selectedSetId === set.id
+                                  ? "bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400"
+                                  : "bg-white dark:bg-zinc-800 hover:bg-stone-50 dark:hover:bg-zinc-750 border-stone-150 dark:border-zinc-750 text-stone-700 dark:text-stone-300"
+                              )}
+                            >
+                              <span className="font-bold truncate">{set.title}</span>
+                              <span className="text-[8px] uppercase font-black px-1 py-0.5 bg-stone-100 dark:bg-zinc-700 text-stone-500 rounded shrink-0">{set.subject || "Chưa phân loại"}</span>
+                            </button>
+                          ));
+                        })()
+                      ) : selectedCategory ? (
+                        /* Inside a selected Category */
+                        (() => {
+                          const categorySets = existingSets.filter(s => (s.subject || "Chưa phân loại") === selectedCategory);
+                          return (
+                            <div className="space-y-1">
+                              <div className="text-[9px] uppercase font-black text-stone-400 tracking-wider mb-1 flex items-center justify-between">
+                                <span>Chuyên mục: {selectedCategory}</span>
+                                <button type="button" onClick={() => setSelectedCategory(null)} className="text-amber-500 hover:underline cursor-pointer">📂Xem các chủ đề khác</button>
+                              </div>
+                              {categorySets.map(set => (
+                                <button
+                                  key={set.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedSetId(set.id);
+                                    setIsCreateNewSet(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left p-2 rounded-lg border transition-all flex items-center justify-between gap-1.5 cursor-pointer text-xs",
+                                    selectedSetId === set.id
+                                      ? "bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400"
+                                      : "bg-white dark:bg-zinc-800 hover:bg-stone-50 dark:hover:bg-zinc-750 border-stone-150 dark:border-zinc-750 text-stone-700 dark:text-stone-300"
+                                  )}
+                                >
+                                  <span className="font-bold truncate">{set.title}</span>
+                                  {selectedSetId === set.id && <span className="text-emerald-500 font-bold shrink-0">✓ đang chọn</span>}
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        /* Categories List / Accordions main mode */
+                        (() => {
+                          const categoryCounts: Record<string, number> = {};
+                          existingSets.forEach(s => {
+                            const sub = s.subject || "Chưa phân loại";
+                            categoryCounts[sub] = (categoryCounts[sub] || 0) + 1;
+                          });
+
+                          return Object.entries(categoryCounts).map(([cat, count]) => (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => setSelectedCategory(cat)}
+                              className="w-full text-left p-2 rounded-lg border bg-white dark:bg-zinc-800 hover:bg-stone-50 dark:hover:bg-zinc-750 border-stone-150 dark:border-zinc-750 text-stone-700 dark:text-stone-300 transition-all flex items-center justify-between cursor-pointer group text-xs"
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span className="text-sm shrink-0">📂</span>
+                                <span className="font-bold truncate group-hover:text-amber-500">{cat}</span>
+                              </div>
+                              <span className="text-[9px] font-mono bg-stone-100 dark:bg-zinc-700 px-1.5 py-0.5 rounded text-stone-500 shrink-0 font-bold">
+                                {count} bộ thẻ
+                              </span>
+                            </button>
+                          ));
+                        })()
+                      )}
+                    </div>
+                  </div>
                 ) : (
-                  <select
-                    value={isCreateNewSet ? "CREATE_NEW_DECK_OPTION_VAL" : selectedSetId}
-                    onChange={e => {
-                      if (e.target.value === "CREATE_NEW_DECK_OPTION_VAL") {
-                        setIsCreateNewSet(true);
-                        setSelectedSetId("");
-                      } else {
-                        setIsCreateNewSet(false);
-                        setSelectedSetId(e.target.value);
-                      }
-                    }}
-                    disabled={savingCard}
-                    className="w-full mt-1 bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 outline-none rounded-xl px-3 py-2 text-sm text-stone-900 dark:text-stone-100 cursor-pointer font-medium"
-                  >
-                    <option value="" disabled>-- Chọn bộ thẻ học --</option>
-                    {existingSets.map(set => (
-                      <option key={set.id} value={set.id}>
-                        {set.title} ({set.subject})
-                      </option>
-                    ))}
-                    <option value="CREATE_NEW_DECK_OPTION_VAL" className="text-amber-500 font-bold">
-                      ➕ [Tạo bộ học mới tinh...]
-                    </option>
-                  </select>
+                  <div className="text-xs text-amber-500 dark:text-amber-400 font-bold mt-1 bg-amber-500/5 p-2 rounded-lg border border-amber-500/10 max-w-xs animate-in slide-in-from-top-1">
+                    ✨ Đang ở chế độ tạo bộ mới dẫu vậy có thể đổi ý bằng tab bên trên!
+                  </div>
                 )}
               </div>
 
