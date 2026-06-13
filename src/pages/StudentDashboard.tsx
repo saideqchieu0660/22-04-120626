@@ -273,6 +273,7 @@ export default function StudentDashboard() {
 
   const [viewMode, setViewMode] = useState<"recent" | "all">("recent");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showCacheClearConfirm, setShowCacheClearConfirm] = useState(false);
 // Removed unused state
   const [muteAll, setMuteAll] = useState(() => getIsMuted());
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
@@ -1076,6 +1077,41 @@ export default function StudentDashboard() {
     keysToRemove.forEach(k => localStorage.removeItem(k));
     setShowClearConfirm(false);
     // Optionally trigger a page reload or force an update here if needed.
+    window.location.reload();
+  };
+
+  const handleClearCache = () => {
+    const systemKeysToKeep = [
+      "theme",
+      "isEcoMode",
+      "henosis-font-size",
+      "henosis-ui-density",
+      "autoUpdateInterval",
+      "autoUpdateTargetTime",
+      "agent3_response_mode",
+      "agent3_response_style",
+      "agent3_concise_mode",
+      "henosis_notifications",
+      "ai_request_cooldown_timestamp",
+      "last_notified_today",
+      "last_study_date",
+      "hasRunTutorial"
+    ];
+
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+            // Keep firebase settings and system configs
+            if (systemKeysToKeep.includes(key) || key.startsWith("firebase:") || key.startsWith("firebase-") || key.includes("firebase")) {
+                continue;
+            }
+            keysToRemove.push(key);
+        }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    setShowCacheClearConfirm(false);
+    alert("Đã dọn dẹp bộ nhớ cache thành công! 🎉");
     window.location.reload();
   };
 
@@ -3724,7 +3760,7 @@ export default function StudentDashboard() {
                  <div className="space-y-2 max-w-lg">
                     <h4 className="text-xl font-bold flex items-center gap-2"><Trash2 className="w-5 h-5 text-red-500" /> Xóa Dữ Liệu Cũ</h4>
                     <p className="opacity-70 text-sm">
-                      Xóa bỏ các dữ liệu nháp của thẻ học (Agent 3) và danh sách thẻ yếu (weak_cards). Điều này giúp làm mới lộ trình học của bạn mà không ảnh hưởng đến điểm số hiện tại.
+                      Xóa bỏ các dữ liệu nháp của thẻ học (Agent 3) và danh sách thẻ yếu (weak_cards) khỏi máy. Điều này giúp tối ưu hóa tiến trình.
                     </p>
                  </div>
                  <button 
@@ -3735,95 +3771,173 @@ export default function StudentDashboard() {
                  </button>
               </div>
 
-              <div className="card-3d p-6 rounded-xl flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-                 <div className="space-y-2 max-w-lg">
-                    <h4 className="text-xl font-bold flex items-center gap-2"><LogOut className="w-5 h-5 text-stone-600 dark:text-stone-400" /> Đăng Xuất</h4>
-                    <p className="opacity-70 text-sm">
-                      Đăng xuất khỏi thiết bị này. Dữ liệu của bạn được đồng bộ an toàn trên hệ thống.
-                    </p>
-                 </div>
-                 <button 
-                    onClick={async () => {
-                      try {
-                        const { signOut } = await import("firebase/auth");
-                        
-                        if (auth.currentUser?.uid) {
-                           try {
-                               const { doc, deleteDoc } = await import("firebase/firestore");
-                               await deleteDoc(doc(db, "costudy_room", auth.currentUser.uid));
-                           } catch (roomErr) {
-                               console.error("Cleanup room error:", roomErr);
-                           }
-                        }
-                  
-                        if (auth.currentUser?.isAnonymous) {
-                            try {
-                               const { dbService } = await import("../lib/firebase");
-                               await dbService.deleteUserProfile(auth.currentUser.uid);
-                               await auth.currentUser.delete();
-                            } catch (delError) {
-                               console.error("Soft failing cleanup of anonymous auth:", delError);
+                             <div className="card-3d p-6 rounded-xl flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                  <div className="space-y-2 max-w-lg">
+                     <h4 className="text-xl font-bold flex items-center gap-2">
+                        <RefreshCw className="w-5 h-5 text-yellow-500" /> Dọn Dẹp Bộ Nhớ Cache
+                     </h4>
+                     <p className="opacity-70 text-sm">
+                        Xóa tất cả các dữ liệu tạm thời như bộ nhớ đệm, lịch sử hoạt động, và dữ liệu chuyển đổi tài liệu để giải phóng dung lượng bộ nhớ. Hệ thống sẽ giữ lại cấu hình giao diện, độ mượt và tài khoản hiện tại của mày.
+                     </p>
+                  </div>
+                  <button 
+                     onClick={() => setShowCacheClearConfirm(true)}
+                     className="shrink-0 px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-lg transition-transform hover:scale-105 flex items-center gap-2 shadow-lg cursor-pointer"
+                  >
+                     Dọn Dẹp Ngay
+                  </button>
+               </div>
+
+               {auth.currentUser?.isAnonymous ? (
+                  <div className="card-3d p-6 rounded-xl flex flex-col md:flex-row gap-6 items-start md:items-center justify-between border border-amber-500/20">
+                     <div className="space-y-2 max-w-lg">
+                        <h4 className="text-xl font-bold flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                           <User className="w-5 h-5" /> Đăng Ký / Đăng Nhập
+                        </h4>
+                        <p className="opacity-70 text-sm">
+                           Mày đang sử dụng tài khoản tạm thời (Anonymous). Hãy nâng cấp hoặc đăng nhập tài khoản chính thức để sao lưu dữ liệu Stoicism vĩnh viễn và đồng bộ đa thiết bị!
+                        </p>
+                     </div>
+                     <button 
+                        onClick={() => {
+                           navigate("/auth");
+                        }}
+                        className="shrink-0 px-6 py-3 bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-700 hover:to-yellow-600 text-white font-bold rounded-lg transition-transform hover:scale-105 flex items-center gap-2 shadow-lg cursor-pointer border-none"
+                     >
+                        <User className="w-4 h-4" /> Đăng Ký / Đăng Nhập
+                     </button>
+                  </div>
+               ) : (
+                  <div className="card-3d p-6 rounded-xl flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                     <div className="space-y-2 max-w-lg">
+                        <h4 className="text-xl font-bold flex items-center gap-2"><LogOut className="w-5 h-5 text-stone-600 dark:text-stone-400" /> Đăng Xuất</h4>
+                        <p className="opacity-70 text-sm">
+                          Đăng xuất khỏi thiết bị này. Dữ liệu của bạn được đồng bộ an toàn trên hệ thống.
+                        </p>
+                     </div>
+                     <button 
+                        onClick={async () => {
+                          try {
+                            const { signOut } = await import("firebase/auth");
+                            
+                            if (auth.currentUser?.uid) {
+                               try {
+                                   const { doc, deleteDoc } = await import("firebase/firestore");
+                                   await deleteDoc(doc(db, "costudy_room", auth.currentUser.uid));
+                               } catch (roomErr) {
+                                   console.error("Cleanup room error:", roomErr);
+                               }
                             }
-                        } else {
-                            await signOut(auth);
-                        }
-                        store.logout();
-                        FirebaseListenerManager.clearAll();
-                        navigate("/");
-                        sessionStorage.removeItem('isAdminMode');
-                      } catch (error) {
-                        console.error("Lỗi đăng xuất:", error);
-                      }
-                    }}
-                    className="shrink-0 px-6 py-3 bg-stone-200 dark:bg-zinc-800 hover:bg-stone-300 dark:hover:bg-zinc-700 font-bold rounded-lg transition-transform hover:scale-105 flex items-center gap-2 shadow-lg shadow-black/5"
-                 >
-                    <LogOut className="w-4 h-4 hidden sm:block" /> Đăng Xuất
-                 </button>
-              </div>
+                      
+                            if (auth.currentUser?.isAnonymous) {
+                                try {
+                                   const { dbService } = await import("../lib/firebase");
+                                   await dbService.deleteUserProfile(auth.currentUser.uid);
+                                   await auth.currentUser.delete();
+                                } catch (delError) {
+                                   console.error("Soft failing cleanup of anonymous auth:", delError);
+                                }
+                            } else {
+                                await signOut(auth);
+                            }
+                            store.logout();
+                            FirebaseListenerManager.clearAll();
+                            navigate("/");
+                            sessionStorage.removeItem('isAdminMode');
+                          } catch (error) {
+                            console.error("Lỗi đăng xuất:", error);
+                          }
+                        }}
+                        className="shrink-0 px-6 py-3 bg-stone-200 dark:bg-zinc-800 hover:bg-stone-300 dark:hover:bg-zinc-700 font-bold rounded-lg transition-transform hover:scale-105 flex items-center gap-2 shadow-lg shadow-black/5 cursor-pointer"
+                     >
+                        <LogOut className="w-4 h-4 hidden sm:block" /> Đăng Xuất
+                     </button>
+                  </div>
+               )}
             </div>
           </div>
 
           {/* Dialog Confirmation */}
           <AnimatePresence>
              {showClearConfirm && (
-                <motion.div 
-                   initial={{ opacity: 0 }}
-                   animate={{ opacity: 1 }}
-                   exit={{ opacity: 0 }}
-                   className="modal-glass-overlay flex items-center justify-center p-4"
-                >
-                   <motion.div 
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.95, opacity: 0 }}
-                      className="bg-stone-100 dark:bg-zinc-900 border border-red-500/30 shadow-2xl rounded-2xl p-6 md:p-8 max-w-md w-full"
-                   >
-                      <div className="flex flex-col items-center text-center space-y-4">
-                         <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
-                             <AlertTriangle className="w-8 h-8" />
-                         </div>
-                         <h3 className="text-2xl font-bold">Bạn có chắc chắn?</h3>
-                         <p className="opacity-80 pb-4">
-                            Hành động này sẽ xóa vĩnh viễn các dữ liệu nháp và danh sách thẻ yếu hiện tại (weak_cards) khỏi hệ thống. Bạn không thể hoàn tác thao tác này. Bạn có muốn tiếp tục không?
-                         </p>
-                         <div className="flex w-full gap-4">
-                            <button 
-                               onClick={() => setShowClearConfirm(false)}
-                               className="flex-1 py-3 rounded-lg border border-amber-600/20 dark:border-amber-500/30 font-bold transition hover:bg-black/5 dark:hover:bg-white/5"
-                            >
+                 <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="modal-glass-overlay flex items-center justify-center p-4"
+                 >
+                    <motion.div 
+                       initial={{ scale: 0.95, opacity: 0 }}
+                       animate={{ scale: 1, opacity: 1 }}
+                       exit={{ scale: 0.95, opacity: 0 }}
+                       className="bg-stone-100 dark:bg-zinc-900 border border-red-500/30 shadow-2xl rounded-2xl p-6 md:p-8 max-w-md w-full"
+                    >
+                       <div className="flex flex-col items-center text-center space-y-4">
+                          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
+                              <AlertTriangle className="w-8 h-8" />
+                          </div>
+                          <h3 className="text-2xl font-bold">Bạn có chắc chắn?</h3>
+                          <p className="opacity-80 pb-4">
+                             Hành động này sẽ xóa vĩnh viễn các dữ liệu nháp và danh sách thẻ yếu hiện tại (weak_cards) khỏi hệ thống. Bạn không thể hoàn tác thao tác này. Bạn có muốn tiếp tục không?
+                          </p>
+                          <div className="flex w-full gap-4">
+                             <button 
+                                onClick={() => setShowClearConfirm(false)}
+                                className="flex-1 py-3 rounded-lg border border-amber-600/20 dark:border-amber-500/30 font-bold transition hover:bg-black/5 dark:hover:bg-white/5"
+                             >
                                Hủy
-                            </button>
-                            <button 
-                               onClick={handleClearOldData}
-                               className="flex-1 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold transition-transform hover:scale-105 shadow-md"
-                            >
-                               Xác Nhận Xóa
-                            </button>
-                         </div>
-                      </div>
-                   </motion.div>
-                </motion.div>
-             )}
+                             </button>
+                             <button 
+                                onClick={handleClearOldData}
+                                className="flex-1 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold transition-transform hover:scale-105 shadow-md"
+                             >
+                                Xác Nhận Xóa
+                             </button>
+                          </div>
+                       </div>
+                    </motion.div>
+                 </motion.div>
+              )}
+
+              {showCacheClearConfirm && (
+                 <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="modal-glass-overlay flex items-center justify-center p-4"
+                 >
+                    <motion.div 
+                       initial={{ scale: 0.95, opacity: 0 }}
+                       animate={{ scale: 1, opacity: 1 }}
+                       exit={{ scale: 0.95, opacity: 0 }}
+                       className="bg-stone-100 dark:bg-zinc-900 border border-yellow-500/30 shadow-2xl rounded-2xl p-6 md:p-8 max-w-md w-full"
+                    >
+                       <div className="flex flex-col items-center text-center space-y-4">
+                          <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 mb-2">
+                              <RefreshCw className="w-8 h-8 animate-spin" />
+                          </div>
+                          <h3 className="text-2xl font-bold">Xác nhận dọn dẹp cache?</h3>
+                          <p className="opacity-80 pb-4">
+                             Thao tác này sẽ dọn sạch tất cả lịch sử hoạt động cục bộ, danh sách tìm kiếm gần đây và các file đệm tạm thời để giải phóng không gian bộ nhớ. Các tùy chọn hệ thống (giao diện, phông chữ, fix lag) và tài khoản đang đăng nhập sẽ được giữ lại an toàn.
+                          </p>
+                          <div className="flex w-full gap-4">
+                             <button 
+                                onClick={() => setShowCacheClearConfirm(false)}
+                                className="flex-1 py-3 rounded-lg border border-amber-600/20 dark:border-amber-500/30 font-bold transition hover:bg-black/5 dark:hover:bg-white/5"
+                             >
+                                Hủy
+                             </button>
+                             <button 
+                                onClick={handleClearCache}
+                                className="flex-1 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white font-bold transition-transform hover:scale-105 shadow-md cursor-pointer"
+                             >
+                                Xác Nhận Dọn Dẹp
+                             </button>
+                          </div>
+                       </div>
+                    </motion.div>
+                 </motion.div>
+              )}
           </AnimatePresence>
         </motion.div>
       )}
