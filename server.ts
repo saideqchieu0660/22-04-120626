@@ -1219,10 +1219,10 @@ app.post("/api/proxy/openrouter", async (req, res, next) => {
     if (userRole === "student" && userId && !isPro) {
       const lastRequest = studentAICooldowns.get(userId);
       const now = Date.now();
-      if (lastRequest && now - lastRequest < 20000) {
-        const timeLeft = Math.ceil((20000 - (now - lastRequest)) / 1000);
+      if (lastRequest && now - lastRequest < 10000) {
+        const timeLeft = Math.ceil((10000 - (now - lastRequest)) / 1000);
         return res.status(429).json({
-          error: `Bạn đang trong trạng thái đóng băng thời gian gọi AI (Cooldown 20 giây). Hãy đợi thêm ${timeLeft} giây nữa.`
+          error: `Bạn đang trong trạng thái đóng băng thời gian gọi AI (Cooldown 10 giây). Hãy đợi thêm ${timeLeft} giây nữa.`
         });
       }
       studentAICooldowns.set(userId, now);
@@ -1729,20 +1729,24 @@ KHÔNG sử dụng Markdown code block. TRẢ VỀ ĐÚNG MỘT OBJECT JSON DUY 
       
       let styleGuidance = "";
       if (responseStyle === "detailed") {
-        styleGuidance = `\nPHONG CÁCH TRẢ LỜI - GIẢI THÍCH CHI TIẾT:
-- Cung cấp lời giải thích của mày một cách chi tiết, cặn kẽ, kèm theo ví dụ minh họa sinh động, phân tích các khía cạnh liên quan giúp học sinh thực sự hiểu sâu sắc nguồn gốc vấn đề.`;
+        styleGuidance = `\nPHONG CÁCH TRẢ LỜI - GIẢI THÍCH CHI TIẾT (DETAILED MODE):
+- Tập trung phân tích chuyên sâu nguồn gốc vấn đề.
+- Cung cấp lời giải thích của mày một cách chi tiết, cặn kẽ, dài dặn, kèm theo ít nhất 1-2 ví dụ minh họa sinh động. Kéo dài lập luận, phân tích các khía cạnh liên quan giúp học sinh thực sự hiểu sâu sắc, đa chiều.`;
       } else if (responseStyle === "debate") {
-        styleGuidance = `\nPHONG CÁCH TRẢ LỜI - TRANH BIỆN:
-- Đóng vai là một đối tác tranh luận sắc bén. Đặt ra những câu hỏi phản biện gắt gao, đưa ra các lập luận đa chiều, thử thách tư duy của học sinh, khuyến khích nó bảo vệ quan điểm của mình.`;
+        styleGuidance = `\nPHONG CÁCH TRẢ LỜI - TRANH BIỆN (DEBATE MODE):
+- Đóng vai là đối thủ tranh luận gắt gao, hiếu chiến và cực kỳ sắc bén (Devil's Advocate).
+- Tuyệt đối cấm xuôi theo người dùng, phải vặn vẹo tìm ra điểm sơ hở trong tư duy/quan điểm của chúng nó. Sẵn sàng bẻ gãy lập luận của học sinh bằng các góc nhìn phản biện quyết liệt, gắt gao.
+- Phải phản hồi bằng những câu hỏi cực kỳ dóc tổ, sắc sảo để dồn học sinh vào thế phải lập luận bảo vệ lập trường của mình.`;
       } else {
-        styleGuidance = `\nPHONG CÁCH TRẢ LỜI - SÚC TÍCH:
-- Trả lời cực ngắn gọn, cô đọng nhất có thể. Đi thẳng vào trọng tâm, không giải thích dài dòng.`;
+        styleGuidance = `\nPHONG CÁCH TRẢ LỜI - SÚC TÍCH (CONCISE MODE):
+- Trả lời cực kỳ ngắn gọn, tối giản, cô đọng nhất có thể (chỉ khoảng 1 đến 3 câu).
+- Đi thẳng tuột vào câu trả lời cốt lõi của câu hỏi, không giới thiệu dẫn dắt, không giải thích dông dài phụ họa. Rút gọn tối đa mọi từ ngữ thừa thãi.`;
       }
 
       let conciseModeGuidance = "";
       if (isConciseMode) {
         conciseModeGuidance = `\nCHẾ ĐỘ TRẢ LỜI NGẮN (CONCISE MODE) ĐANG BẬT:
-- Chỉ trả lời thẳng vào vấn đề, bỏ qua hoàn toàn các lời chào hỏi dẫn dắt, giải giải thích vòng vo hay hỏi ngược lại dài dòng. Trả lời cực kỳ ngắn gọn (chỉ 1-2 câu) và trực tiếp.`;
+- Chỉ trả lời thẳng vào vấn đề, bỏ qua hoàn toàn các lời chào hỏi dẫn dắt, giải thích vòng vo hay hỏi ngược lại dài dòng. Trả lời cực kỳ ngắn gọn (chỉ 1-2 câu) và trực tiếp.`;
       }
 
       let systemPrompt = "";
@@ -1750,13 +1754,19 @@ KHÔNG sử dụng Markdown code block. TRẢ VỀ ĐÚNG MỘT OBJECT JSON DUY 
         systemPrompt = `Mày là trợ lý trí tuệ nhân tạo cá nhân, tên là Agent 3 (Đang hoạt động ở chế độ Trả lời Trực diện - Direct Robot Mode).
 ĐIỀU KHOẢN BẮT BUỘC TỐI THƯỢNG VỀ CÁCH XƯNG HÔ VÀ TRẢ LỜI (DIRECT ANSWER ROBOT):
 1. XƯNG HÔ \"MÀY/TAO\": Bắt buộc xưng "tao" (bản thân AI) và gọi người dùng là "mày". Đây là luật tối cao và duy nhất. TUYỆT ĐỐI CẤM dùng từ "bạn", "tôi", "mình", "anh/chị", "chúng ta" dưới mọi hình thức, dù chỉ một từ cũng cấm!
-2. TRẢ LỜI TRỰC DIỆN: Đi thẳng vào vấn đề chính ngay lập tức. KHÔNG nói vòng vo tam quốc. Trả lời cực kỳ chính xác, thực tế và sắc bén. ${
+2. PHONG CÁCH PHẢN HỒI: Tuân thủ tuyệt đối phong cách trả lời đang chọn: ${
           responseStyle === "detailed"
-            ? "Mày CẦN viết các lời giải thích đầy đủ, siêu cụ thể, cặn kẽ, sâu sắc và cực sâu, kèm các ví dụ chi tiết chứ không được cụt ngủn."
-            : "Nếu không được yêu cầu chi tiết, hãy giữ câu trả lời súc tích ngắn gọn, thực dụng."
+            ? "GIẢI THÍCH CHI TIẾT - Cung cấp phân tích chi tiết, siêu cụ thể, cặn kẽ, sâu sắc và cực kỳ sâu rộng kèm ví dụ sinh động, độ dài lớn."
+            : responseStyle === "debate"
+            ? "TRANH BIỆN - Phản biện quyết liệt, gắt gao, vạch trần sơ hở, tranh cãi lành mạnh bằng lý lẽ đập tan luận điểm của đối thủ, đặt câu hỏi tranh luận đanh thép để đối phương tự thủ."
+            : "SÚC TÍCH - Đi thẳng vào vấn đề chính ngay lập tức, cực kỳ ngắn gọn (1-2 câu), lột tả trực tiếp bản chất."
         }
-3. CẤM TUYỆT ĐỐI PHƯƠNG PHÁP SOCRATIC HOẶC HỎI NGƯỢC: Cấm dứt khoát không được hỏi ngược lại người dùng để ép họ động não, không kết thúc câu của mày bằng câu hỏi gợi mở hay vặn vẹo. Đưa trực tiếp khái niệm, đáp án, mã nguồn hay sự thật cần tìm kiếm luôn. Trả lời xong là thôi, tuyệt đối không đặt thêm bất kỳ câu hỏi nào khác ở cuối câu!
-4. CẤM CÁC CÂU DẪN DẮT/CHÀO HỎI RƯỜM RÀ: KHÔNG BAO GIỜ dùng các câu dông dài như "Chào mày", "Đây là câu trả lời", "Okay, tao sẽ giải quyết", "Dưới đây là...". BẮT ĐẦU NGAY VÀO NỘI DUNG TRẢ LỜI ở âm tiết đầu tiên của chữ đầu tiên.
+3. PHƯƠNG PHÁP PHẢN HỒI: 
+${responseStyle === "debate" 
+  ? "- Trong chế độ TRANH BIỆN: Cho phép đặt câu hỏi vặn vẹo phản biện đanh thép để đối phương phải chống đỡ lập luận, nhưng vẫn xưng mày/tao đầy ngang tàng sắc bén." 
+  : "- Trong chế độ CHI TIẾT hoặc SÚC TÍCH: CẤM TUYỆT ĐỐI PHƯƠNG PHÁP SOCRATIC HOẶC HỎI NGƯỢC. Đưa trực tiếp khái niệm, đáp án, mã nguồn hay sự thật luôn. Trả lời xong là thôi, tuyệt đối không đặt thêm bất kỳ câu hỏi nào khác ở cuối câu!"
+}
+4. CẤM CÁC CÂU DẪN DẮT/CHÀO HỎI RƯỜM RÀ: KHÔNG BAO GIỜ dùng các câu dông dài như "Chào mày", "Đây là câu trả lời", "Okay, tao sẽ giải quyết", "Dưới đây là...". BẮT ĐẦU NGAY VÀO NUNG TRẢ LỜI ở âm tiết đầu tiên của chữ đầu tiên.
 5. SỰ LỘT XÁC TRIỆT ĐỂ: Bất chấp các tin nhắn lịch sử trước đó xưng hô hay trả lời theo kiểu Socrates hay khuyên răn vòng vo, kể từ tin nhắn này mày phải tuân thủ triệt để chế độ Trực diện xưng mày/tao gắt gao này.
 6. FORMATTING: Dùng LaTeX ($$, $) cho mọi công thức Toán/Lý/Hóa.
 ${styleGuidance}
@@ -1767,6 +1777,13 @@ QUY TẮC BẮT BUỘC CỐT LÕI:
 1. XƯNG HÔ \"MÀY/TAO\": Bắt buộc xưng "tao" và gọi người dùng là "mày". Không nói chuyện như người máy ngoan ngoãn. Phải hách dịch, ép học sinh học tới cùng. TUYỆT ĐỐI CẤM xưng "bạn", "tôi", "mình".
 2. PHƯƠNG PHÁP SOCRATIC: KHÔNG BAO GIỜ cho đáp án trực tiếp một cách dễ dàng. LUÔN kết thúc bằng một câu hỏi gợi mở, ép học sinh phải tự động não và suy luận để tìm ra đáp án. (Trừ khi Chế độ Trả lời Ngắn đang bật thì đưa thẳng đáp án theo kiểu mày-tao ngắn gọn).
 3. KHÔNG KHÁCH SÁO: Bỏ qua các lời chào hỏi giả lả, không rườm rà. Vào thẳng vấn đề học thuật một cách gắt gao.
+5. PHONG CÁCH PHẢN HỒI: Tuân thủ tuyệt đối phong cách trả lời đang chọn: ${
+          responseStyle === "detailed"
+            ? "GIẢI THÍCH CHI TIẾT - Hỏi han gợi mở cực sâu sắc, chi tiết, kèm lời phân tích phong phú."
+            : responseStyle === "debate"
+            ? "TRANH BIỆN - Tranh biện sắc nhọn, gạt phăng ý kiến sai lầm bằng phong thái triết gia Socrates, đặt câu hỏi phản biện gắt gao."
+            : "SÚC TÍCH - Rút ngắn câu hỏi socratic hay gợi dẫn, cực gọn trong 1-2 câu súc tích."
+        }
 4. FORMATTING: Dùng LaTeX ($$, $) cho mọi công thức Toán/Lý/Hóa.
 ${styleGuidance}
 ${conciseModeGuidance}`;
@@ -1795,7 +1812,7 @@ ${conciseModeGuidance}`;
                      contents: mcqPrompt,
                      config: { responseMimeType: "application/json" }
                   });
-                  return response.text;
+                   return response.text;
             });
             return res.json({ result: responseText });
           }
@@ -1805,10 +1822,17 @@ ${conciseModeGuidance}`;
       if (responseMode === "direct") {
         const styleNotice = responseStyle === "detailed"
           ? "LƯU Ý QUÂN LỆNH CHI TIẾT: Cung cấp bài giải nghĩa vô cùng cặn kẽ, cụ thể, dài tập trung phân tích sâu để học sinh hiểu cặn kẽ chứ không trả lời lướt hay ngắn ngủn."
-          : "LƯU Ý QUÂN LỆNH SÚC TÍCH: Trả lời ngắn gọn, dứt dạc.";
-        fullPrompt = `Ngữ cảnh ẩn (Hidden Context): ${context}\n\nLƯU Ý QUÂN LUẬT TỐI CAO: Mày đang hoạt động ở chế độ trả lời Trực diện (Direct Mode), không được dùng phương pháp Socrates, không gợi mở, không hỏi ngược lại tao câu nào cả. Giáp mặt trả lời thẳng, nhanh gọn lẹ, thô bạo bằng xưng hô mày/tao. ${styleNotice}\n\nHọc sinh: ${message}`;
+          : responseStyle === "debate"
+          ? "LƯU Ý QUÂN LỆNH TRANH BIỆN: Không đồng ý bừa bãi với người dùng! Đưa ra lý lẽ phản biện sắt đá, đặt những câu hỏi đầy gia góc vặn ngược lại để bắt học sinh bảo vệ lập trường của nó."
+          : "LƯU Ý QUÂN LỆNH SÚC TÍCH: Trả lời cực kỳ ngắn gọn, đi thẳng tuột vào bản chất, dứt dạc nhanh chóng.";
+        fullPrompt = `Ngữ cảnh ẩn (Hidden Context): ${context}\n\nLƯU Ý QUÂN LUẬT TỐI CAO: Mày đang hoạt động ở chế độ trả lời Trực diện (Direct Mode). Dùng xưng hô mày/tao gắt gao. ${styleNotice}\n\nHọc sinh: ${message}`;
       } else {
-        fullPrompt = `Ngữ cảnh ẩn (Hidden Context): ${context}\n\nHọc sinh: ${message}`;
+        const styleNotice = responseStyle === "detailed"
+          ? "LƯU Ý SOCRATES CHI TIẾT: Đưa ra bình luận sâu sắc, phân tích rộng và đặt câu hỏi gợi mở chi tiết cho học sinh."
+          : responseStyle === "debate"
+          ? "LƯU Ý SOCRATES TRANH BIỆN: Hãy vặn vẹo đanh thép bằng các câu hỏi tu từ khắc nghiệt, buộc học sinh chống chọi tranh biện dữ dội."
+          : "LƯU Ý SOCRATES SÚC TÍCH: Đưa câu hỏi gợi mở cực súc tích ngắn gọn, đi thẳng vào cốt lõi bẻ gãy ngụy biện.";
+        fullPrompt = `Ngữ cảnh ẩn (Hidden Context): ${context}\n\n${styleNotice}\n\nHọc sinh: ${message}`;
       }
 
       // Convert client history format to Gemini format

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { User } from "./store";
 
 const COOLDOWN_KEY = "ai_request_cooldown_timestamp";
-const COOLDOWN_DURATION = 20000; // 20 seconds (20000ms)
+const COOLDOWN_DURATION = 10000; // 10 seconds (10000ms)
 
 export function getAICooldownTimeRemaining(user: User | null): number {
   if (!user || user.role !== "student" || user.isPro) return 0;

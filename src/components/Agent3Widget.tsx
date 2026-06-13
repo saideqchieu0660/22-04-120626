@@ -674,7 +674,7 @@ export default function Agent3Widget() {
                      <div className="relative w-12 h-12 flex items-center justify-center">
                         <div className="absolute inset-0 border-4 border-yellow-500/20 rounded-full"></div>
                         <svg className="absolute inset-0 w-12 h-12 -rotate-90" viewBox="0 0 100 100">
-                          <circle cx="50" cy="50" r="46" fill="transparent" stroke="currentColor" strokeWidth="8" strokeDasharray="289" strokeDashoffset={289 - (289 * (20 - cooldownRemaining)) / 20} className="text-yellow-500 transition-all duration-1000 ease-linear" />
+                          <circle cx="50" cy="50" r="46" fill="transparent" stroke="currentColor" strokeWidth="8" strokeDasharray="289" strokeDashoffset={289 - (289 * (10 - cooldownRemaining)) / 10} className="text-yellow-500 transition-all duration-1000 ease-linear" />
                         </svg>
                         <Bot className="w-5 h-5 text-yellow-500 animate-pulse relative z-10" />
                      </div>
@@ -704,7 +704,7 @@ export default function Agent3Widget() {
                 onClick={handleSend}
                 disabled={isLoading || !input.trim() || cooldownRemaining > 0}
                 className="p-1.5 bg-yellow-500 text-black rounded-lg disabled:opacity-50 hover:bg-yellow-600 transition cursor-pointer flex items-center justify-center shrink-0 w-8 h-8"
-                title={cooldownRemaining > 0 ? `Đang trong cooldown 20s (Còn lại ${cooldownRemaining}s)` : "Gửi"}
+                title={cooldownRemaining > 0 ? `Đang trong cooldown 10s (Còn lại ${cooldownRemaining}s)` : "Gửi"}
               >
                 {cooldownRemaining > 0 ? (
                   <span className="text-[10px] font-black font-mono text-stone-900">{cooldownRemaining}s</span>
