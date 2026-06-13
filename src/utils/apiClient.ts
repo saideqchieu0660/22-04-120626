@@ -159,7 +159,7 @@ function cleanJsonResponse(text: string): string {
 }
 
 function buildGroqPayload(url: string, parsedBody: any): { model: string; messages: any[] } {
-  const model = "openai/gpt-oss-120b"; // Updated to GPT-OSS-120B
+  const model = "google/gemini-2.5-flash"; // Updated to Gemini 2.5 Flash for gold-standard stability and speed
 
   let messages: any[] = [];
 
@@ -495,7 +495,7 @@ async function fetchOpenRouterWithBackoff(model: string, messages: any[], attemp
               "X-Title": "Henosis Learning App"
             },
             body: JSON.stringify({
-              model: "openai/gpt-oss-120b", // Strictly updated to openai/gpt-oss-120b
+              model: "google/gemini-2.5-flash", // Updated to Gemini 2.5 Flash for gold-standard stability and speed
               messages,
               temperature: 0.7,
               max_tokens: 4096 // Force-set directly to 4096
@@ -533,7 +533,7 @@ async function fetchOpenRouterWithBackoff(model: string, messages: any[], attemp
               "X-Title": "Henosis Learning App"
             },
             body: JSON.stringify({
-              model: "openai/gpt-oss-120b", // Strictly updated to openai/gpt-oss-120b
+              model: "google/gemini-2.5-flash", // Updated to Gemini 2.5 Flash for gold-standard stability and speed
               messages,
               temperature: 0.7,
               max_tokens: 4096 // Force-set directly to 4096
@@ -1026,76 +1026,97 @@ export function getInterleavedPool(): InterleavedKey[] {
 
 // Direct Call implementations using raw provider HTTP Endpoints bypasses server proxies
 async function fetchOpenRouterDirect(apiKey: string, model: string, messages: any[], isJsonExpected: boolean): Promise<string> {
-  const bodyObj: any = {
-    model: "openai/gpt-oss-120b", // Updated to GPT-OSS-120B
-    messages,
-    temperature: 0.1,
-    max_tokens: 4096 // Force-set to 4096
-  };
-  
-  if (isJsonExpected) {
-    bodyObj.response_format = { type: "json_object" };
-  }
+  const modelsToTry = [
+    (model && model !== "openai/gpt-oss-120b") ? model : "google/gemini-2.5-flash",
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "google/gemini-2.5-flash:free",
+    "meta-llama/llama-3-8b-instruct:free"
+  ];
 
-  try {
-    const response = await fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://henosisweb.vercel.app",
-        "X-Title": "Henosis Learning App"
-      },
-      body: JSON.stringify(bodyObj)
-    }, 45000);
+  let lastError: any = null;
 
-    if (!response.ok) {
-      const errText = await response.text();
-      handleKeyError(apiKey, "openRouter", response.status, errText);
-      const isSilent = [402, 403, 404, 429].includes(response.status) || 
-                       errText.toLowerCase().includes("unavailable for free") || 
-                       errText.toLowerCase().includes("paid version") ||
-                       errText.toLowerCase().includes("paid version only") ||
-                       errText.toLowerCase().includes("model not found");
+  for (const currentModel of modelsToTry) {
+    const bodyObj: any = {
+      model: currentModel,
+      messages,
+      temperature: 0.1,
+      max_tokens: 4096
+    };
+    
+    if (isJsonExpected) {
+      bodyObj.response_format = { type: "json_object" };
+    }
+
+    try {
+      console.log(`[apiClient OpenRouter Direct] Attempting completions using model: ${currentModel}`);
+      const response = await fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://henosisweb.vercel.app",
+          "X-Title": "Henosis Learning App"
+        },
+        body: JSON.stringify(bodyObj)
+      }, 45000);
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.warn(`[apiClient OpenRouter Direct] Model ${currentModel} failed with status ${response.status}: ${errText}`);
+        lastError = new Error(`OpenRouter API Error: ${response.status} - ${errText}`);
+        
+        if (response.status === 400 || errText.toLowerCase().includes("model not found") || errText.toLowerCase().includes("unavailable")) {
+          // Model error or deprecated, step down to next model
+          continue;
+        }
+
+        handleKeyError(apiKey, "openRouter", response.status, errText);
+        const isSilent = [402, 403, 404, 429].includes(response.status) || 
+                         errText.toLowerCase().includes("unavailable for free") || 
+                         errText.toLowerCase().includes("paid version") ||
+                         errText.toLowerCase().includes("paid version only") ||
+                         errText.toLowerCase().includes("model not found");
+                         
+        if (isSilent) {
+          throw new Error("PROVIDER_SILENT_FAIL");
+        }
+        throw lastError;
+      }
+
+      const data = await response.json();
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Empty content returned from OpenRouter direct endpoint.");
+      return content;
+    } catch (err: any) {
+      if (err.message === "PROVIDER_SILENT_FAIL") {
+        throw err;
+      }
+      lastError = err;
+      const errString = err.message || "";
+      if (errString.includes("400") || errString.toLowerCase().includes("model")) {
+        continue;
+      }
+      
+      const isSilent = errString.toLowerCase().includes("unavailable for free") || 
+                       errString.toLowerCase().includes("paid version") ||
+                       errString.toLowerCase().includes("paid version only") ||
+                       errString.toLowerCase().includes("model not found") ||
+                       errString.toLowerCase().includes("403") ||
+                       errString.toLowerCase().includes("404");
                        
       if (isSilent) {
         console.warn("OpenRouter slot failed, bypassing...");
         throw new Error("PROVIDER_SILENT_FAIL");
       }
-      throw new Error(`OpenRouter Direct failure: ${response.status} - ${errText}`);
-    }
 
-    const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) throw new Error("Empty content returned from OpenRouter direct endpoint.");
-    return content;
-  } catch (err: any) {
-    if (err.message === "PROVIDER_SILENT_FAIL") {
+      if (err.message && !err.message.includes("OpenRouter Direct failure") && !err.message.includes("OpenRouter API Error")) {
+        handleKeyError(apiKey, "openRouter", 0, err.message || "");
+      }
       throw err;
     }
-    if (err.name === "AbortError") {
-      handleKeyError(apiKey, "openRouter", 408, "Request Timeout 45s");
-      throw new Error("Request Timeout 45s on OpenRouter Direct");
-    }
-    
-    const errString = err.message || "";
-    const isSilent = errString.toLowerCase().includes("unavailable for free") || 
-                     errString.toLowerCase().includes("paid version") ||
-                     errString.toLowerCase().includes("paid version only") ||
-                     errString.toLowerCase().includes("model not found") ||
-                     errString.toLowerCase().includes("403") ||
-                     errString.toLowerCase().includes("404");
-                     
-    if (isSilent) {
-      console.warn("OpenRouter slot failed, bypassing...");
-      throw new Error("PROVIDER_SILENT_FAIL");
-    }
-
-    if (err.message && !err.message.includes("OpenRouter Direct failure")) {
-      handleKeyError(apiKey, "openRouter", 0, err.message || "");
-    }
-    throw err;
   }
+
+  throw lastError || new Error("All fallback models on OpenRouter failed.");
 }
 
 async function fetchGeminiDirect(apiKey: string, messages: any[], isJsonExpected: boolean): Promise<string> {
@@ -1338,16 +1359,9 @@ async function executeFetchWithBackoffAndEvasion(url: string, options?: RequestI
         console.warn("Skipping invalid key slot");
         console.warn(`[apiClient Rotation] Rotation failure on provider ${item.provider} on attempt ${attempts}. Error: ${err.message || err}. Incrementing pointer immediately.`);
         
-        const isSilent = err.message === 'PROVIDER_SILENT_FAIL' || (err.message && err.message.includes('PROVIDER_SILENT_FAIL'));
-        
-        if (!isSilent && typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent('global-api-error', { 
-            detail: { 
-              message: `[Rotation - ${item.provider}] ${err.message || err}`, 
-              path: url 
-            } 
-          }));
-        }
+        // During rotation, we do NOT dispatch user-facing popups/toasts for individual key errors because we are cycling through alternatives
+        // the final request will be fallback proxy or raise an actual fetch error if everything completely fails.
+        // This stops multiple red "Lỗi Hệ Thống" popups from covering the user's screen.
 
         // Increment the interleaved key pointer on EVERY failed attempt to advance immediately
         globalPoolIndex++;

@@ -1725,47 +1725,48 @@ KHÔNG sử dụng Markdown code block. TRẢ VỀ ĐÚNG MỘT OBJECT JSON DUY 
   // Agent 3: Socratic & Context-Aware Assistant
   app.post("/api/agent3/chat", aiCooldownMiddleware, async (req, res, next) => {
     try {
-      const { message, history, context, mode, mcqData, difficulty, sessionId, responseMode, responseStyle, isConciseMode, category_context } = req.body;
+      const { message, history, context, mode, mcqData, difficulty, sessionId, responseMode, responseStyle, isConciseMode, category_context, questionCount } = req.body;
       
       let styleGuidance = "";
       if (responseStyle === "detailed") {
         styleGuidance = `\nPHONG CÁCH TRẢ LỜI - GIẢI THÍCH CHI TIẾT:
-- Cung cấp lời giải thích chi tiết, cặn kẽ, kèm theo ví dụ minh họa sinh động, phân tích các khía cạnh liên quan giúp học sinh thực sự hiểu sâu sắc nguồn gốc vấn đề.`;
+- Cung cấp lời giải thích của mày một cách chi tiết, cặn kẽ, kèm theo ví dụ minh họa sinh động, phân tích các khía cạnh liên quan giúp học sinh thực sự hiểu sâu sắc nguồn gốc vấn đề.`;
       } else if (responseStyle === "debate") {
         styleGuidance = `\nPHONG CÁCH TRẢ LỜI - TRANH BIỆN:
-- Đóng vai là một đối tác tranh luận sắc bén. Đặt ra những câu hỏi phản biện, đưa ra các lập luận đa chiều, thử thách tư duy của học sinh, khuyến khích họ bảo vệ quan điểm của của mình.`;
+- Đóng vai là một đối tác tranh luận sắc bén. Đặt ra những câu hỏi phản biện gắt gao, đưa ra các lập luận đa chiều, thử thách tư duy của học sinh, khuyến khích nó bảo vệ quan điểm của mình.`;
       } else {
         styleGuidance = `\nPHONG CÁCH TRẢ LỜI - SÚC TÍCH:
-- Trả lời ngắn gọn, cô đọng nhất có thể. Đi thẳng vào trọng tâm, không giải thích dài dòng.`;
+- Trả lời cực ngắn gọn, cô đọng nhất có thể. Đi thẳng vào trọng tâm, không giải thích dài dòng.`;
       }
 
       let conciseModeGuidance = "";
       if (isConciseMode) {
         conciseModeGuidance = `\nCHẾ ĐỘ TRẢ LỜI NGẮN (CONCISE MODE) ĐANG BẬT:
-- Chỉ trả lời thẳng vào vấn đề, bỏ qua hoàn toàn các lời dẫn dắt, giải thích vòng vo hay hỏi ngược lại dài dòng. Trả lời cực kỳ ngắn gọn (chỉ 1-2 câu).`;
+- Chỉ trả lời thẳng vào vấn đề, bỏ qua hoàn toàn các lời chào hỏi dẫn dắt, giải giải thích vòng vo hay hỏi ngược lại dài dòng. Trả lời cực kỳ ngắn gọn (chỉ 1-2 câu) và trực tiếp.`;
       }
 
       let systemPrompt = "";
       if (responseMode === "direct") {
-        systemPrompt = `Bạn là một trợ lý trí tuệ nhân tạo cá nhân, tên là Agent 3 (Mặc định ở chế độ Trả lời Trực diện - Direct Robot Mode).
-ĐIỀU KHOẢN BẮT BUỘC CỐT LÕI VỀ CÁCH XƯNG HÔ VÀ TRẢ LỜI (DIRECT ANSWER ROBOT):
-1. XƯNG HÔ "MÀY/TAO": Bắt buộc luôn xưng "tao" (bản thân AI) và gọi người dùng là "mày". Đây là luật tối cao. Cấm xưng "tôi", "bạn", "chúng ta" dưới mọi hình thức.
+        systemPrompt = `Mày là trợ lý trí tuệ nhân tạo cá nhân, tên là Agent 3 (Đang hoạt động ở chế độ Trả lời Trực diện - Direct Robot Mode).
+ĐIỀU KHOẢN BẮT BUỘC TỐI THƯỢNG VỀ CÁCH XƯNG HÔ VÀ TRẢ LỜI (DIRECT ANSWER ROBOT):
+1. XƯNG HÔ \"MÀY/TAO\": Bắt buộc xưng "tao" (bản thân AI) và gọi người dùng là "mày". Đây là luật tối cao và duy nhất. TUYỆT ĐỐI CẤM dùng từ "bạn", "tôi", "mình", "anh/chị", "chúng ta" dưới mọi hình thức, dù chỉ một từ cũng cấm!
 2. TRẢ LỜI TRỰC DIỆN: Đi thẳng vào vấn đề chính ngay lập tức. KHÔNG nói vòng vo tam quốc. Trả lời cực kỳ chính xác, thực tế và sắc bén. ${
           responseStyle === "detailed"
-            ? "Tuy nhiên, do học sinh yêu cầu giải thích CHI TIẾT phong phú, mày CẦN viết các lời giải thích đầy đủ, siêu cụ thể, cặn kẽ, sâu sắc và cực sâu, kèm các ví dụ chi tiết chứ không được cụt ngủn."
+            ? "Mày CẦN viết các lời giải thích đầy đủ, siêu cụ thể, cặn kẽ, sâu sắc và cực sâu, kèm các ví dụ chi tiết chứ không được cụt ngủn."
             : "Nếu không được yêu cầu chi tiết, hãy giữ câu trả lời súc tích ngắn gọn, thực dụng."
         }
-3. CẤM TUYỆT ĐỐI PHƯƠNG PHÁP SOCRATIC HOẶC HỎI NGƯỢC: Cấm dứt khoát không được hỏi ngược lại học sinh để ép họ động não, không kết thúc câu bằng câu hỏi thảo luận, không gợi mở vòng vo. Hãy đưa trực tiếp khái niệm, đáp án, mã nguồn hay sự thật cần tìm kiếm luôn.
+3. CẤM TUYỆT ĐỐI PHƯƠNG PHÁP SOCRATIC HOẶC HỎI NGƯỢC: Cấm dứt khoát không được hỏi ngược lại người dùng để ép họ động não, không kết thúc câu của mày bằng câu hỏi gợi mở hay vặn vẹo. Đưa trực tiếp khái niệm, đáp án, mã nguồn hay sự thật cần tìm kiếm luôn. Trả lời xong là thôi, tuyệt đối không đặt thêm bất kỳ câu hỏi nào khác ở cuối câu!
 4. CẤM CÁC CÂU DẪN DẮT/CHÀO HỎI RƯỜM RÀ: KHÔNG BAO GIỜ dùng các câu dông dài như "Chào mày", "Đây là câu trả lời", "Okay, tao sẽ giải quyết", "Dưới đây là...". BẮT ĐẦU NGAY VÀO NỘI DUNG TRẢ LỜI ở âm tiết đầu tiên của chữ đầu tiên.
-5. FORMATTING: Dùng LaTeX ($$, $) cho mọi công thức Toán/Lý/Hóa.
+5. SỰ LỘT XÁC TRIỆT ĐỂ: Bất chấp các tin nhắn lịch sử trước đó xưng hô hay trả lời theo kiểu Socrates hay khuyên răn vòng vo, kể từ tin nhắn này mày phải tuân thủ triệt để chế độ Trực diện xưng mày/tao gắt gao này.
+6. FORMATTING: Dùng LaTeX ($$, $) cho mọi công thức Toán/Lý/Hóa.
 ${styleGuidance}
 ${conciseModeGuidance}`;
       } else {
-        systemPrompt = `Bạn là Agent 3 - 'Socrates AI Coach', gia sư học tập chủ động và khắc nghiệt.
+        systemPrompt = `Mày là Agent 3 - 'Socrates AI Coach', gia sư học tập chủ động và khắc nghiệt tuyệt đối của người dùng.
 QUY TẮC BẮT BUỘC CỐT LÕI:
-1. XƯNG HÔ "MÀY/TAO": Bắt buộc xưng "tao" và gọi học sinh là "mày". Không nói chuyện như người máy ngoan ngoãn. Phải hách dịch, ép học sinh học tới cùng.
+1. XƯNG HÔ \"MÀY/TAO\": Bắt buộc xưng "tao" và gọi người dùng là "mày". Không nói chuyện như người máy ngoan ngoãn. Phải hách dịch, ép học sinh học tới cùng. TUYỆT ĐỐI CẤM xưng "bạn", "tôi", "mình".
 2. PHƯƠNG PHÁP SOCRATIC: KHÔNG BAO GIỜ cho đáp án trực tiếp một cách dễ dàng. LUÔN kết thúc bằng một câu hỏi gợi mở, ép học sinh phải tự động não và suy luận để tìm ra đáp án. (Trừ khi Chế độ Trả lời Ngắn đang bật thì đưa thẳng đáp án theo kiểu mày-tao ngắn gọn).
-3. KHÔNG KHÁCH SÁO: Bỏ qua mọi lời chào hỏi, không giả lả. Vào thẳng vấn đề học thuật một cách gắt gao.
+3. KHÔNG KHÁCH SÁO: Bỏ qua các lời chào hỏi giả lả, không rườm rà. Vào thẳng vấn đề học thuật một cách gắt gao.
 4. FORMATTING: Dùng LaTeX ($$, $) cho mọi công thức Toán/Lý/Hóa.
 ${styleGuidance}
 ${conciseModeGuidance}`;
@@ -1773,8 +1774,8 @@ ${conciseModeGuidance}`;
 
       if (mode === "quiz") {
           const diffLevel = difficulty || "medium";
-          const qCount = req.body.questionCount ? Math.min(Math.max(Number(req.body.questionCount), 5), 40) : 15;
-          systemPrompt += `\n\nNhiệm vụ: Tạo một bài kiểm tra trắc nghiệm ${qCount} câu hỏi liên tiếp dựa trên ngữ cảnh được cung cấp. Cấp độ khó: ${diffLevel}. Đầu vào là yêu cầu người dùng: ${message}`;
+          const qCount = questionCount ? Math.min(Math.max(Number(questionCount), 5), 40) : 15;
+          systemPrompt += `\n\nNhiệm vụ: Tạo một bài kiểm tra trắc nghiệm đúng chính xác ${qCount} câu hỏi liên tiếp dựa trên ngữ cảnh được cung cấp. Cấp độ khó: ${diffLevel}. Đầu vào là yêu cầu người dùng: ${message}`;
           if (mcqData) {
             let difficultyGuidance = "Cấp độ trung bình.";
             if (diffLevel === "easy") difficultyGuidance = "Cấp độ dễ: Hỏi trực tiếp định nghĩa cơ bản, nhận biết trực tiếp.";
@@ -1783,9 +1784,9 @@ ${conciseModeGuidance}`;
             
             let mcqPrompt = "";
             if (category_context) {
-              mcqPrompt = `Tạo một bài Test ${qCount} câu trắc nghiệm MCQ cho mục học "${category_context.name}". Giới hạn phạm vi tạo câu hỏi CHỈ xoay quanh các khái niệm, định nghĩa và kiến thức học tập trong mục học này dựa trên danh sách thẻ dữ liệu dưới đây. Độ khó: ${difficultyGuidance}\nTrả về đúng 1 mảng JSON chứa các object: {"question": "...", "options": ["A...","B...","C...","D..."], "correctIndex": 0..3, "explanation": "..."}. KHÔNG trả về thứ gì khác ngoài JSON.\nDữ liệu các thẻ trong mục học này: ${JSON.stringify(mcqData)}`;
+              mcqPrompt = `YÊU CẦU BẮT BUỘC TỐI CAO: Tạo chính xác ĐÚNG ${qCount} câu hỏi trắc nghiệm MCQ (không được thừa, không được thiếu, bắt buộc phải trả về chính xác đúng ${qCount} object câu hỏi) cho mục học "${category_context.name}". Giới hạn phạm vi tạo câu hỏi CHỈ xoay quanh các khái niệm, định nghĩa và kiến thức học tập trong mục học này dựa trên danh sách thẻ dữ liệu dưới đây. Độ khó: ${difficultyGuidance}\nTrả về đúng 1 mảng JSON chứa chính xác đúng ${qCount} object: {"question": "...", "options": ["A...","B...","C...","D..."], "correctIndex": 0..3, "explanation": "..."}. TUYỆT ĐỐI KHÔNG trả về thứ gì khác ngoài mảng JSON.\nDữ liệu các thẻ trong mục học này: ${JSON.stringify(mcqData)}`;
             } else {
-              mcqPrompt = `Tạo một bài Test ${qCount} câu trắc nghiệm MCQ dựa trên danh sách các thẻ yếu sau đây. \nĐộ khó: ${difficultyGuidance}\nTrả về đúng 1 mảng JSON chứa các object: {"question": "...", "options": ["A...","B...","C...","D..."], "correctIndex": 0..3, "explanation": "..."}. KHÔNG trả về gì khác ngoài JSON.\nDữ liệu hổng kiến thức: ${JSON.stringify(mcqData)}`;
+              mcqPrompt = `YÊU CẦU BẮT BUỘC TỐI CAO: Tạo chính xác ĐÚNG ${qCount} câu hỏi trắc nghiệm MCQ (không được thừa, không được thiếu, bắt buộc phải trả về chính xác đúng ${qCount} object câu hỏi) dựa trên danh sách các thẻ yếu sau đây. \nĐộ khó: ${difficultyGuidance}\nTrả về đúng 1 mảng JSON chứa chính xác đúng ${qCount} object: {"question": "...", "options": ["A...","B...","C...","D..."], "correctIndex": 0..3, "explanation": "..."}. TUYỆT ĐỐI KHÔNG trả về gì khác ngoài mảng JSON.\nDữ liệu hổng kiến thức: ${JSON.stringify(mcqData)}`;
             }
             
             const responseText = await executeGeminiWithRetry(async (ai) => {

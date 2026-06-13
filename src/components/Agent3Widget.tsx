@@ -39,8 +39,18 @@ export default function Agent3Widget() {
   const [messages, setMessages] = useState<{role: "user"|"ai", text: string}[]>([]);
 
   useEffect(() => {
+    const savedMode = (localStorage.getItem("agent3_response_mode") as "socratic" | "direct") || "socratic";
+    const welcomeText = savedMode === "direct"
+      ? "Yo! Tao là Agent 3 - Trợ lý trực diện của mày đây. Bắn câu hỏi đi, tao trả lời thẳng tuột rôm rốp, ko bao giờ hỏi ngược hay gợi mở dông dài!"
+      : "Yo! Tao là Agent 3 - 'Socrates Coach' siêu cấp của mày đây. Hôm nay muốn cày từ vựng IELTS, học lập trình ESP32 hay phân tích tâm lý học kinh tế chi không? Hãy gõ lệnh `/draw` + (chủ đề) để tao băm mindmap ngay! Đóng điện ra lệnh đi m!";
+    setMessages([{ role: "ai", text: welcomeText }]);
+  }, []);
+
+  /* Ký sinh đè lên useEffect gốc bằng cách comment out
+  useEffect(() => {
     setMessages([{ role: "ai", text: "Yo! Tao là Agent 3 - Trợ lý siêu cấp của mày đây. Hôm nay muốn cày từ vựng IELTS, học lập trình ESP32 hay phân tích tâm lý học kinh tế chi không? Đặc biệt, tao mới được nâng cấp hệ thống: có khả năng BẮM KHÁI NIỆM & VẼ SƠ ĐỒ TƯ DUY (MINDMAP) trực quan cực đỉnh luôn nà! Cứ gõ lệnh `/draw` cộng với (chủ đề), ví dụ: `/draw cấu trúc IELTS Writing Task 2`, tao băm phát một ra sơ đồ liền. Đóng điện ra lệnh đi m!" }]);
   }, []);
+  */
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(() => uuidv4());
@@ -58,6 +68,12 @@ export default function Agent3Widget() {
   const handleToggleResponseMode = (mode: "socratic" | "direct") => {
     setResponseMode(mode);
     localStorage.setItem("agent3_response_mode", mode);
+    
+    // Thêm thông báo đổi chế độ bằng tiếng mày-tao cực bựa vào chatbox
+    const noticeText = mode === "direct"
+      ? "⚡ *Hệ thống: Đã chuyển sang chế độ Trực Diện.* Từ giờ tao sẽ trả lời thẳng tuột vấn đề trần trụi bằng xưng xô mày/tao, cấm tiệt phương pháp Socrates vòng vo!"
+      : "🤔 *Hệ thống: Đã chuyển sang chế độ Gợi Mở.* Tao sẽ gặng hỏi vặn vẹo xoắn não để ép mày phải tự động não suy nghĩ!";
+    setMessages(prev => [...prev, { role: "ai", text: noticeText }]);
   };
 
   const handleToggleResponseStyle = (style: "concise" | "detailed" | "debate") => {
@@ -584,13 +600,6 @@ export default function Agent3Widget() {
           </div>
           
           <div className="flex-1 min-h-0 relative overflow-y-auto p-4 space-y-4 bg-stone-50/90 dark:bg-zinc-950/40 sm:bg-transparent sm:dark:bg-transparent">
-             <div className={cn(
-               "bg-stone-200/50 dark:bg-white/10 p-3 rounded-xl rounded-tl-none w-fit max-w-[85%] text-stone-800 dark:text-stone-200 transition-all duration-300 relative z-10",
-               isMaximized ? "text-lg" : "text-sm"
-             )}>
-                 Chào bạn. Mình là Gia sư Socratic. Bạn muốn tìm hiểu về chủ đề gì hôm nay?
-             </div>
-             
              <AnimatePresence>
              {messages.map((m, i) => (
                 <motion.div 

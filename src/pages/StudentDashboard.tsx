@@ -1222,6 +1222,11 @@ export default function StudentDashboard() {
                return q;
             });
 
+            // Guardrail triệt để: Giới hạn chính xác số câu hỏi theo mong muốn của người dùng
+            if (questions.length > customQuestionCount) {
+                questions = questions.slice(0, customQuestionCount);
+            }
+
             setQuizQuestions(questions);
             setIsQuizLoading(false);
         } else {
@@ -1302,6 +1307,11 @@ export default function StudentDashboard() {
                }
                return q;
             });
+
+            // Guardrail triệt để cho Mock Exam
+            if (questions.length > examQuestionCount) {
+                questions = questions.slice(0, examQuestionCount);
+            }
 
             setQuizQuestions(questions);
             setIsQuizLoading(false);
