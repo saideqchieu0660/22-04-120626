@@ -274,7 +274,11 @@ export async function syncUserToFirebase() {
         lastActiveDate: currentUser.lastActiveDate || new Date().toISOString().split('T')[0],
         streakFreeze: !!currentUser.streakFreeze,
         isAnonymous: auth.currentUser?.isAnonymous || false,
-        isSchoolLover: !!currentUser.isSchoolLover
+        isSchoolLover: !!currentUser.isSchoolLover,
+        level: currentUser.level || 1,
+        avatarBorder: currentUser.avatarBorder || "none",
+        title: currentUser.title || "",
+        photoURL: currentUser.photoURL || ""
       };
 
       import('./offlineSync').then(({ OfflineSyncQueue }) => {
@@ -700,10 +704,29 @@ export const store = {
       saveLocalUserDecks();
     }
   },
-  buyStreakFreeze: () => {
-    if (currentUser && currentUser.points >= 50 && !currentUser.streakFreeze) {
-      currentUser.points -= 50;
+  buyStreakFreeze: (customPrice: number = 400) => {
+    if (currentUser && currentUser.points >= customPrice && !currentUser.streakFreeze) {
+      currentUser.points -= customPrice;
       currentUser.streakFreeze = true;
+      syncUserToFirebase();
+      return true;
+    }
+    return false;
+  },
+  buyXPPotion: (price: number = 150, xpEarned: number = 50) => {
+    if (currentUser && currentUser.points >= price) {
+      currentUser.points = currentUser.points - price + xpEarned;
+      syncUserToFirebase();
+      return true;
+    }
+    return false;
+  },
+  buyLevelUp: (price: number = 600) => {
+    if (currentUser && currentUser.points >= price) {
+      currentUser.points -= price;
+      // Calculate current level and add 1
+      const currentLevel = currentUser.level || Math.max(1, Math.floor(Math.sqrt(Math.max(0, currentUser.points) / 50)) + 1);
+      currentUser.level = currentLevel + 1;
       syncUserToFirebase();
       return true;
     }

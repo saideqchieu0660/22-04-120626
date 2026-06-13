@@ -4,10 +4,10 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
 import { SoundProvider } from './components/SoundProvider';
-import { registerServiceWorker } from './lib/serviceWorkerRegistration';
+import { unregisterServiceWorker } from './lib/serviceWorkerRegistration';
 
-// Register service worker for offline caching and fallback
-registerServiceWorker();
+// Unregister service worker to prevent corrupt caching / blank page issues
+unregisterServiceWorker();
 
 // Handle dynamic import failures globally (Auto-reload on new production deployments)
 const handleChunkError = (message: string) => {

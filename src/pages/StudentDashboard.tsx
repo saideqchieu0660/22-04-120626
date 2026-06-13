@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { store, Deck } from "../lib/store";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { Plus, X, Play, TrendingUp, Users, Target, BookOpen, BrainCircuit, Activity, Flame, ArrowLeft, CheckCircle2, XCircle, ArrowRight, Loader2, Trophy, Sparkles, Maximize2, Minimize2, Bell, BellOff, BellRing, Settings, AlertTriangle, Trash2, Snowflake, Volume2, VolumeX, Clock, Network, Award, Bot, User, Crown, ChevronUp, ChevronDown, Minus, Shield, RefreshCw, Heart, LogOut, Bug, Type, Library, Camera, Edit3, HelpCircle } from "lucide-react";
+import { Plus, X, Play, TrendingUp, Users, Target, BookOpen, BrainCircuit, Activity, Flame, ArrowLeft, CheckCircle2, XCircle, ArrowRight, Loader2, Trophy, Sparkles, Maximize2, Minimize2, Bell, BellOff, BellRing, Settings, AlertTriangle, Trash2, Snowflake, Volume2, VolumeX, Clock, Network, Award, Bot, User, Crown, ChevronUp, ChevronDown, Minus, Shield, RefreshCw, Heart, LogOut, Bug, Type, Library, Camera, Edit3, HelpCircle, ShoppingBag } from "lucide-react";
 import { MarcusAureliusIcon } from "../components/MarcusAureliusIcon";
 import { cn } from "../lib/utils";
 import { safeRequest } from "../utils/apiClient";
@@ -224,7 +224,7 @@ export default function StudentDashboard() {
   const [quote] = useState(() => MOTIVATION_QUOTES[Math.floor(Math.random() * MOTIVATION_QUOTES.length)]);
   const [showTutorial, setShowTutorial] = useState(false);
   
-  const [activeTab, setActiveTab] = useState<"study" | "ranking" | "quiz" | "mock_exam_setup" | "settings" | "history" | "skill_tree" | "all_sets" | "groups" | "achievements" | "profile" | "create_deck" | "cyberpunk">("study");
+  const [activeTab, setActiveTab] = useState<"study" | "ranking" | "quiz" | "mock_exam_setup" | "settings" | "history" | "skill_tree" | "all_sets" | "groups" | "achievements" | "profile" | "create_deck" | "cyberpunk" | "shop">("study");
   const [profileNameInput, setProfileNameInput] = useState("");
   const [isEditingProfileName, setIsEditingProfileName] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -1539,12 +1539,12 @@ export default function StudentDashboard() {
 
             <button
                onClick={handleBuyFreeze}
-               disabled={user?.streakFreeze || (user ? user.points < 50 : true)}
-               title="Streak Freeze (Bảo vệ chuỗi ngày học) - Tốn 50 pts"
+               disabled={user?.streakFreeze || (user ? user.points < 400 : true)}
+               title="Streak Freeze (Bảo vệ chuỗi ngày học) - Tốn 400 pts"
                className={cn("px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition hover:scale-105", user?.streakFreeze ? "bg-blue-500 text-white" : "bg-blue-500/20 text-blue-700 dark:text-blue-400 opacity-60 hover:opacity-100 disabled:opacity-30 disabled:hover:scale-100")}
             >
               <Snowflake className={cn("w-5 h-5", user?.streakFreeze ? "animate-pulse" : "")} />
-              {user?.streakFreeze ? "Đã Kích Hoạt" : "Trang Bị (50 pts)"}
+              {user?.streakFreeze ? "Đã Kích Hoạt" : "Băng Hỏa Vệ (400 pts)"}
             </button>
 
             <div id="trigger-quiz-from-dashboard">
@@ -1569,6 +1569,7 @@ export default function StudentDashboard() {
           { id: "study", label: "Góc Học Tập", icon: BookOpen, bubble: remindLaterCount > 0 },
           { id: "all_sets", label: "Bộ Học", icon: Library },
           { id: "create_deck", label: "Tạo Bộ Thẻ", icon: Plus },
+          { id: "shop", label: "Chợ Vật Phẩm", icon: ShoppingBag },
           { id: "ranking", label: "Xếp Hạng", icon: MarcusAureliusIcon },
           { id: "skill_tree", label: "Lộ Trình", icon: Network },
           { id: "cyberpunk", label: "Cinematic Room", icon: Sparkles },
@@ -2713,6 +2714,331 @@ export default function StudentDashboard() {
                 Chưa có học sinh nào trên bảng xếp hạng tuần này.
               </div>
             )}
+          </div>
+        </motion.div>
+      )}
+
+      {activeTab === "shop" && (
+        <motion.div 
+          key="shop-tab"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.3 }}
+          className="max-w-5xl mx-auto space-y-6"
+        >
+          {/* Shop Header */}
+          <div className="glass p-6 md:p-8 rounded-3xl relative overflow-hidden text-center mb-6">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl" />
+            
+            <ShoppingBag className="w-12 h-12 text-amber-500 mx-auto mb-4 animate-bounce" />
+            <h3 className="text-3xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-700 via-amber-500 to-yellow-600 dark:from-amber-200 dark:via-yellow-400 dark:to-amber-500 mb-2">
+              Chợ Vật Phẩm Học Tập
+            </h3>
+            <p className="font-roman text-sm md:text-base italic opacity-85 max-w-2xl mx-auto mb-6 leading-relaxed">
+              "Người khôn ngoan biết dùng tích lũy trí tuệ để đổi lấy trang bị và sức mạnh tinh thần đột phá." — Marcus Aurelius
+            </p>
+
+            <div className="flex justify-center items-center gap-3">
+              <span className="text-sm opacity-75 font-semibold">Ví điểm của mày:</span>
+              <div className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 px-4 py-2 rounded-xl font-extrabold text-lg flex items-center gap-2 border border-yellow-500/30 shadow-inner">
+                <Flame className="w-5 h-5 text-yellow-500 animate-pulse fill-current" />
+                <span>{user?.points || 0} pts</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Grid of Items */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            {/* Item 1: Streak Freeze */}
+            <div className="glass p-6 rounded-2xl border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/5 rounded-full group-hover:scale-150 transition-transform duration-500" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
+                    <Snowflake className="w-6 h-6 animate-spin-slow" />
+                  </span>
+                  <span className="px-3 py-1 bg-blue-500/20 text-blue-700 dark:text-blue-300 rounded-full text-xs font-bold">
+                    Duy Nhất
+                  </span>
+                </div>
+                <h4 className="text-lg font-bold mb-1 text-stone-800 dark:text-stone-200">Băng Hỏa Vệ (Streak Freeze)</h4>
+                <p className="text-xs opacity-70 mb-4 min-h-[40px]">
+                  Bảo vệ chuỗi học tập (Streak) của mày nếu lỡ quên không ôn tập thẻ trong 1 ngày. Cứu cánh đắc lực cho những ngày bận rộn!
+                </p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-stone-200/50 dark:border-white/5 flex items-center justify-between">
+                <span className="font-extrabold text-base text-blue-600 dark:text-blue-400">400 pts</span>
+                <button
+                  onClick={() => {
+                    if (user?.streakFreeze) {
+                      alert("Mày đã sở hữu Băng Hỏa Vệ rồi!");
+                      return;
+                    }
+                    if (user && user.points < 400) {
+                      alert("Không đủ điểm rồi mày ơi! Chăm chỉ ôn tập để kiếm thêm points nhé.");
+                      return;
+                    }
+                    if (store.buyStreakFreeze(400)) {
+                      alert("Kích hoạt Băng Hỏa Vệ thành công! Bạn được bảo vệ tối đa 1 ngày rảnh.");
+                      setForceRender(prev => prev + 1);
+                    }
+                  }}
+                  disabled={user?.streakFreeze || (user ? user.points < 400 : true)}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 hover:shadow-blue-500/40 active:scale-95 transition disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  {user?.streakFreeze ? "Đã Sở Hữu" : "Mua Ngay"}
+                </button>
+              </div>
+            </div>
+
+            {/* Item 2: XP Potion */}
+            <div className="glass p-6 rounded-2xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-purple-500/5 rounded-full group-hover:scale-150 transition-transform duration-500" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="p-3 bg-purple-500/10 rounded-xl text-purple-500">
+                    <Sparkles className="w-6 h-6 animate-pulse" />
+                  </span>
+                  <span className="px-3 py-1 bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-full text-xs font-bold">
+                    Tiêu Dùng
+                  </span>
+                </div>
+                <h4 className="text-lg font-bold mb-1 text-stone-800 dark:text-stone-200">Dịch Hồi Thiên (+50 XP)</h4>
+                <p className="text-xs opacity-70 mb-4 min-h-[40px]">
+                  Tăng trực tiếp 50 điểm kinh nghiệm (XP) vào tài khoản của mày giúp tăng cấp nhanh hơn và xếp hạng tuần vượt trội!
+                </p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-stone-200/50 dark:border-white/5 flex items-center justify-between">
+                <span className="font-extrabold text-base text-purple-600 dark:text-purple-400">150 pts</span>
+                <button
+                  onClick={() => {
+                    if (user && user.points < 150) {
+                      alert("Không đủ điểm rồi mày ơi! Hãy học thêm các bộ thẻ để tích luỹ.");
+                      return;
+                    }
+                    if (store.buyXPPotion(150, 50)) {
+                      alert("Nốc bình thuốc thành công! Nhận ngay +50 XP bổ trợ tinh thần.");
+                      setForceRender(prev => prev + 1);
+                    }
+                  }}
+                  disabled={user ? user.points < 150 : true}
+                  className="px-4 py-2 bg-purple-500 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-500/20 hover:shadow-purple-500/40 active:scale-95 transition"
+                >
+                  Mua Ngay
+                </button>
+              </div>
+            </div>
+
+            {/* Item 3: Level Up */}
+            <div className="glass p-6 rounded-2xl border border-amber-500/20 hover:border-amber-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-amber-500/5 rounded-full group-hover:scale-150 transition-transform duration-500" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="p-3 bg-amber-500/10 rounded-xl text-amber-500">
+                    <Trophy className="w-6 h-6 animate-pulse" />
+                  </span>
+                  <span className="px-3 py-1 bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-full text-xs font-bold">
+                    Cao Cấp
+                  </span>
+                </div>
+                <h4 className="text-lg font-bold mb-1 text-stone-800 dark:text-stone-200">Bạch Kim Thăng Cấp (+1 Cấp)</h4>
+                <p className="text-xs opacity-70 mb-4 min-h-[40px]">
+                  Nâng thẳng 1 cấp độ tức thì! Mở khóa ngay các đặc quyền danh hiệu cấp cao mà không cần tích luỹ từng bậc.
+                </p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-stone-200/50 dark:border-white/5 flex items-center justify-between">
+                <span className="font-extrabold text-base text-amber-600 dark:text-amber-400">600 pts</span>
+                <button
+                  onClick={() => {
+                    if (user && user.points < 600) {
+                      alert("Không đủ điểm rồi mày ơi! Cố gắng luyện tập Stoic thêm nhé.");
+                      return;
+                    }
+                    if (store.buyLevelUp(600)) {
+                      alert("Bạn đã đột phá thăng cấp thành công! Level+1.");
+                      setForceRender(prev => prev + 1);
+                    }
+                  }}
+                  disabled={user ? user.points < 600 : true}
+                  className="px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-500/20 hover:shadow-amber-500/40 active:scale-95 transition"
+                >
+                  Mua Ngay
+                </button>
+              </div>
+            </div>
+
+            {/* Item 4: custom avatar border Diamond */}
+            <div className="glass p-6 rounded-2xl border border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-cyan-500/5 rounded-full group-hover:scale-150 transition-transform duration-500" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="p-3 bg-cyan-500/10 rounded-xl text-cyan-500">
+                    <Shield className="w-6 h-6" />
+                  </span>
+                  <span className="px-3 py-1 bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 rounded-full text-xs font-bold">
+                    Trang Trí
+                  </span>
+                </div>
+                <h4 className="text-lg font-bold mb-1 text-stone-800 dark:text-stone-200">Viền Avatar Kim Cương</h4>
+                <p className="text-xs opacity-70 mb-4 min-h-[40px]">
+                  Trang bị ngay khung viền hào quang phát sáng lấp lánh màu neon xung quanh ảnh đại diện của mày ở mọi bảng xếp hạng!
+                </p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-stone-200/50 dark:border-white/5 flex items-center justify-between">
+                <span className="font-extrabold text-base text-cyan-600 dark:text-cyan-400">500 pts</span>
+                <button
+                  onClick={async () => {
+                    if (user?.avatarBorder === "diamond") {
+                      alert("Mày đã có khung viền này rồi!");
+                      return;
+                    }
+                    if (user && user.points < 500) {
+                      alert("Thiếu điểm rùi mày. Nâng cao kỹ năng để kiếm points.");
+                      return;
+                    }
+                    try {
+                      const newPoints = user!.points - 500;
+                      // Update Firestore database
+                      const { dbService } = await import("../lib/firebase");
+                      await dbService.updateUserProfile(user!.id, { 
+                        points: newPoints,
+                        avatarBorder: "diamond" 
+                      });
+                      // Update local global store
+                      store.updateCurrentUser({ 
+                        points: newPoints,
+                        avatarBorder: "diamond" 
+                      }, true);
+                      
+                      alert("Đã nâng cấp hào quang Kim cương lôi cuốn thành công!");
+                      setForceRender(prev => prev + 1);
+                    } catch (e) {
+                      console.error(e);
+                      alert("Lỗi khi mua khung viền.");
+                    }
+                  }}
+                  disabled={user ? user.points < 500 : true}
+                  className="px-4 py-2 bg-cyan-550 bg-cyan-500 text-white rounded-xl text-xs font-bold shadow-md shadow-cyan-500/20 hover:shadow-cyan-500/40 active:scale-95 transition"
+                >
+                  {user?.avatarBorder === "diamond" ? "Đã Trang Bị" : "Mua Ngay"}
+                </button>
+              </div>
+            </div>
+
+            {/* Item 5: Title "Kỳ Tài" */}
+            <div className="glass p-6 rounded-2xl border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-emerald-500/5 rounded-full group-hover:scale-150 transition-transform duration-500" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="p-3 bg-emerald-500/10 rounded-xl text-emerald-500">
+                    <Crown className="w-6 h-6 animate-pulse" />
+                  </span>
+                  <span className="px-3 py-1 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-bold">
+                    Danh Hiệu
+                  </span>
+                </div>
+                <h4 className="text-lg font-bold mb-1 text-stone-800 dark:text-stone-200">Danh Hiệu "Kỳ Tài"</h4>
+                <p className="text-xs opacity-70 mb-4 min-h-[40px]">
+                  Danh xưng "Kỳ Tài" độc nhất vô nhị. Khi đeo vào, tên của mày trên bảng xếp hạng sẽ hiển thị cùng với sự tôn quí sang trọng!
+                </p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-stone-200/50 dark:border-white/5 flex items-center justify-between">
+                <span className="font-extrabold text-base text-emerald-600 dark:text-emerald-400">300 pts</span>
+                <button
+                  onClick={async () => {
+                    if (user?.title === "Kỳ Tài") {
+                      alert("Mày đã trang bị danh hiệu Kỳ Tài rồi!");
+                      return;
+                    }
+                    if (user && user.points < 300) {
+                      alert("Cần 300 pts để sở hữu danh xưng này!");
+                      return;
+                    }
+                    try {
+                      const newPoints = user!.points - 300;
+                      const { dbService } = await import("../lib/firebase");
+                      await dbService.updateUserProfile(user!.id, { 
+                        points: newPoints,
+                        title: "Kỳ Tài" 
+                      });
+                      store.updateCurrentUser({ 
+                        points: newPoints,
+                        title: "Kỳ Tài" 
+                      }, true);
+                      
+                      alert("Mày đã chính thức được sắc phong danh hiệu 'Kỳ Tài'!");
+                      setForceRender(prev => prev + 1);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }}
+                  disabled={user ? user.points < 300 : true}
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 active:scale-95 transition"
+                >
+                  {user?.title === "Kỳ Tài" ? "Đã Đeo" : "Mua Ngay"}
+                </button>
+              </div>
+            </div>
+
+            {/* Item 6: School Lover Toggle */}
+            <div className="glass p-6 rounded-2xl border border-red-500/20 hover:border-red-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-red-500/5 rounded-full group-hover:scale-150 transition-transform duration-500" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="p-3 bg-red-500/10 rounded-xl text-red-500">
+                    <Heart className="w-6 h-6 animate-pulse fill-current" />
+                  </span>
+                  <span className="px-3 py-1 bg-red-500/20 text-red-700 dark:text-red-300 rounded-full text-xs font-bold">
+                    Trang Trí
+                  </span>
+                </div>
+                <h4 className="text-lg font-bold mb-1 text-stone-800 dark:text-stone-200">Trái Tim Nồng Nhiệt</h4>
+                <p className="text-xs opacity-70 mb-4 min-h-[40px]">
+                  Mua biểu hiệu Trái Tim đỏ thắm ngay kế bên tài khoản của mày biểu thị lòng nhiệt huyết học tập vô bờ bến!
+                </p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-stone-200/50 dark:border-white/5 flex items-center justify-between">
+                <span className="font-extrabold text-base text-red-600 dark:text-red-400">200 pts</span>
+                <button
+                  onClick={async () => {
+                    if (user?.isSchoolLover) {
+                      alert("Mày đã sở hữu hiệu ứng Trái Tim rồi!");
+                      return;
+                    }
+                    if (user && user.points < 200) {
+                      alert("Mày cần tích lũy tối thiểu 200 pts!");
+                      return;
+                    }
+                    try {
+                      const newPoints = user!.points - 200;
+                      const { dbService } = await import("../lib/firebase");
+                      await dbService.updateUserProfile(user!.id, { 
+                        points: newPoints,
+                        isSchoolLover: true 
+                      });
+                      store.updateCurrentUser({ 
+                        points: newPoints,
+                        isSchoolLover: true 
+                      }, true);
+                      setDbUsers(prev => prev.map(u => u.id === user!.id ? { ...u, isSchoolLover: true } : u));
+                      
+                      alert("Hiển thị Trái Tim Nồng Nhiệt thành công!");
+                      setForceRender(prev => prev + 1);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }}
+                  disabled={user ? user.points < 200 : true}
+                  className="px-4 py-2 bg-red-500 text-white rounded-xl text-xs font-bold shadow-md shadow-red-500/20 hover:shadow-red-500/40 active:scale-95 transition"
+                >
+                  {user?.isSchoolLover ? "Đã Kích Hoạt" : "Mua Ngay"}
+                </button>
+              </div>
+            </div>
+
           </div>
         </motion.div>
       )}
